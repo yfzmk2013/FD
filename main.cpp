@@ -116,6 +116,12 @@ typedef struct SURFFeature {
 } SURFFeature;
 typedef struct SURFFeaturePool {
 
+
+    SURFFeaturePool()
+            : sample_width_(40), sample_height_(40),
+              patch_move_step_x_(16), patch_move_step_y_(16), patch_size_inc_step_(1),
+              patch_min_width_(16), patch_min_height_(16){}
+
     typedef struct SURFPatchFormat {
         /**< aspect ratio, s.t. GCD(width, height) = 1 */
         int32_t width;
@@ -142,6 +148,14 @@ typedef struct SURFFeaturePool {
 
 typedef struct SURFFeatureMap {
 
+    SURFFeatureMap()
+            : width_(0), height_(0) {
+        roi_.x = 0;
+        roi_.y = 0;
+        roi_.width = 0;
+        roi_.height = 0;
+    }
+
 
     int32_t width_;
     int32_t height_;
@@ -149,7 +163,7 @@ typedef struct SURFFeatureMap {
     Rect roi_;
 
 
-    static const int32_t kNumIntChannel = 8;
+    const int32_t kNumIntChannel = 8;
     bool buf_valid_reset_;
     std::vector<int32_t> grad_x_;
     std::vector<int32_t> grad_y_;
@@ -1350,16 +1364,15 @@ void Read1(std::istream *input, SURFMLP &surfmlp) {
         is_read = false;
     }
 
+
     feat_id_buf_.resize(num_feat);
-    input->read(reinterpret_cast<char *>(feat_id_buf_.data()),
+    input->read(reinterpret_cast<char*>(feat_id_buf_.data()),
                 sizeof(int32_t) * num_feat);
     for (int32_t i = 0; i < num_feat; i++)
         surfmlp.feat_id_.push_back(feat_id_buf_[i]);
 
-
-    input->read(reinterpret_cast<char *>(&thresh), sizeof(float));
-    surfmlp.thresh_ = thresh;
-    //surf_mlp->SetThreshold(thresh);
+    input->read(reinterpret_cast<char*>(&thresh), sizeof(float));
+    surfmlp.thresh_ = (thresh);
 
     input->read(reinterpret_cast<char *>(&input_dim), sizeof(int32_t));
     if (input_dim <= 0) {
@@ -1382,9 +1395,11 @@ void Read1(std::istream *input, SURFMLP &surfmlp) {
                     sizeof(float) * output_dim);
 
         if (i < num_layer - 1) {
+            printf("okok\n");
             AddLayer(input_dim, output_dim, weights_buf_.data(),
                      bias_buf_.data(), false, surfmlp);
         } else {
+            printf("okaaa\n");
             AddLayer(input_dim, output_dim, weights_buf_.data(),
                      bias_buf_.data(), true, surfmlp);
         }
@@ -1437,6 +1452,8 @@ std::vector<FaceInfo> Detect(FuStDetector *fuStDetector, ImagePyramid *img_pyram
                 //for (int32_t i = 0; i < hierarchy_size_[0]; i++) {
                 for (int32_t i = 0; i < 3; i++) {
 
+                    printf("%d,%d,%d\n",y,x,i);
+
                     if (Classify0(&score, 0, lABBoostedClassifierS[i])) {
                         wnd_info.score = static_cast<double>(score);
                         proposals[i].push_back(wnd_info);
@@ -1445,17 +1462,23 @@ std::vector<FaceInfo> Detect(FuStDetector *fuStDetector, ImagePyramid *img_pyram
             }
         }
 
+
+
         img_scaled = GetNextScaleImage(&scale_factor, img_pyramid);
     }
 
 
-    printf("aaaa");
+
+
     std::vector<std::vector<FaceInfo> > proposals_nms(3);
     for (int32_t i = 0; i < 3; i++) {
         NonMaximumSuppression(&(proposals[i]),
                               &(proposals_nms[i]), 0.8f);
         proposals[i].clear();
     }
+
+
+
 
     // Following classifiers
 
@@ -1472,14 +1495,35 @@ std::vector<FaceInfo> Detect(FuStDetector *fuStDetector, ImagePyramid *img_pyram
     int hierarchy_size_[3] = {3, 1, 1};
     int num_stage_[5] = {1, 1, 1, 2, 1};
 
+    printf("eeee\n");
 
-    std::vector<std::vector<int> > wnd_src_id_(5);
+
+    std::vector<std::vector<int> > wnd_src_id_;
+    std::vector<int> v1;
+    wnd_src_id_.push_back(v1);
+    std::vector<int> v2;
+    wnd_src_id_.push_back(v2);
+    std::vector<int> v3;
+    wnd_src_id_.push_back(v3);
+    std::vector<int> v4;
+    v4.push_back(0);
+    v4.push_back(1);
+    v4.push_back(2);
+    wnd_src_id_.push_back(v4);
+
+    std::vector<int> v5;
+    v5.push_back(0);
+    wnd_src_id_.push_back(v5);
+
+
     //wnd_src_id_
 
-    wnd_src_id_[3][0] = 0;
-    wnd_src_id_[3][0] = 1;
-    wnd_src_id_[3][1] = 2;
-    wnd_src_id_[4][0] = 0;
+//    wnd_src_id_[3][0] = 0;
+//    wnd_src_id_[3][0] = 1;
+//    wnd_src_id_[3][1] = 2;
+//    wnd_src_id_[4][0] = 0;
+
+    printf("fff\n");
 
 
     for (int32_t i = 1; i < 3; i++) {
@@ -1515,6 +1559,7 @@ std::vector<FaceInfo> Detect(FuStDetector *fuStDetector, ImagePyramid *img_pyram
                     Compute2(&feat_map_, fuStDetector->wnd_data_.data(), wnd_size_, wnd_size_);
                     SetROI2(&feat_map_, roi);
 
+                    printf("%d\n",sURFMLPS.size());
 
                     if (Classify2(sURFMLPS[0], &score, mlp_predicts.data())) {
                         float x = static_cast<float>(bboxes[m].bbox.x);
