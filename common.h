@@ -11,7 +11,7 @@
 
 typedef struct ImageData {
     ImageData() {
-        data = nullptr;
+        data = 0;
         width = 0;
         height = 0;
         num_channels = 0;
@@ -19,7 +19,7 @@ typedef struct ImageData {
 
     ImageData(int img_width, int img_height,
               int img_num_channels = 1) {
-        data = nullptr;
+        data = 0;
         width = img_width;
         height = img_height;
         num_channels = img_num_channels;
